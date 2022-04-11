@@ -369,6 +369,9 @@ client = MongoClient('localhost', 27017)
 db = client.ncaa
 TEAMS = db.teams2
 
+START_YEAR = 2022
+END_YEAR = 2023
+
 url_re = r'(\d+)'
 stats_url = 'https://www.espn.com/mens-college-basketball/team/stats/_/id/{}/season/{}'
 record_url = 'https://www.espn.com/mens-college-basketball/standings/_/season/{}'
@@ -378,7 +381,7 @@ STATS_CAT = ['NAME','GP','MIN','PTS','REB','AST','STL','BLK','TO','FG%','FT%','3
              'total_AST','total_TO','total_STL','total_BLK']
 
 
-for year in range(2022,2023):
+for year in range(START_YEAR,END_YEAR):
     for id_name in ids:
         print("Stats ==> " + stats_url.format(id_name['id'], str(year)))
         if TEAMS.find_one({'ID': id_name['id'] + str(year)}) == None:
@@ -400,7 +403,7 @@ for year in range(2022,2023):
             team = Team(id_name['id'], meta)
             TEAMS.insert_one(team.to_dict())
 
-for year in range(2022,2023):
+for year in range(START_YEAR,END_YEAR):
     print("Record ==> " + record_url.format(str(year)))
     url_record = requests.get(record_url.format(str(year)))
     record = url_record.text
@@ -431,7 +434,7 @@ for year in range(2022,2023):
                 TEAMS.update_one({'name': name, 'year': str(year)}, { '$set': { 'record': meta }})
 
 bpi_url = 'https://www.espn.com/mens-college-basketball/bpi/_/view/overview/season/{}/page/{}'
-for year in range(2022, 2023):
+for year in range(START_YEAR, END_YEAR):
     for page in range(1,9):
         print("BPI ==> " + bpi_url.format(str(year), str(page)))
         bpi_req = requests.get(bpi_url.format(str(year), str(page))).text
