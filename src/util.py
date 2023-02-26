@@ -18,3 +18,11 @@ def load_json(filepath):
         data = json.load(f)
 
     return data
+
+def parse_int(int_str):
+    try:
+        res = int(int_str)
+        return res
+    except ValueError as e:
+        print(f"Invalid param passed {int_str}")
+        return None

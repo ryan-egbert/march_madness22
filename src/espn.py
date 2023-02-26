@@ -13,9 +13,21 @@ ESPN_TEAMS_FP = "./output/espn_teams.json"
 BPI_TEAMS_FP = "./output/bpi_teams.json"
 ESPN_SCHEDULE_LINK = "https://www.espn.com/mens-college-basketball/team/schedule/_/id/{}/season/{}"
 ESPN_STATS_LINK = "https://www.espn.com/mens-college-basketball/team/stats/_/id/{}/season/{}"
-ESPN_BPI_LINK = "https://www.espn.com/mens-college-basketball/bpi/_/view/overview/season/{}/page/{}"
+ESPN_BPI_LINK = "https://www.espn.com/mens-college-basketball/bpi/_/season/{}/page/{}"
+ESPN_STANDINGS_LINK = "https://www.espn.com/mens-college-basketball/standings/_/season/{}"
+
+TEAM_ID_FROM_LINK = '\/id\/(\d+)\/'
 
 YEAR = 2022
+
+def get_team_id_from_url(url):
+    m = re.search(TEAM_ID_FROM_LINK, url)
+    if m:
+        id_ = m.group(1)
+    else:
+        id_ = -1
+    
+    return id_
 
 def _get_teams():
     """
@@ -31,11 +43,7 @@ def _get_teams():
             "name": name,
             "link": link
         }
-        m = re.search('\/id\/(\d+)\/', link)
-        if m:
-            id_ = m.group(1)
-        else:
-            id_ = -1
+        id_ = get_team_id_from_url(link)
         if id_ in team_link_map:
             if isinstance(team_link_map[id_], list):
                 team_link_map[id_].append(data)
@@ -104,6 +112,67 @@ def _get_season_stats(team_id, year):
     
     return stats
 
+def _get_season_records(year):
+    """
+    Gets a team's record for a given year
+    """
+    columns = [
+        "CONF_RECORD",
+        "GB",
+        "CONF_PERCENT",
+        "OVR_RECORD",
+        "OVR_PERCENT",
+        "HOME_RECORD",
+        "AWAY_RECORD",
+        "STREAK",
+        "VS_AP",
+        "VS_USA"
+    ]
+    link = ESPN_STANDINGS_LINK.format(year)
+    soup = get_soup(link)
+    tables = soup.find_all("tbody", {"class": "Table__TBODY"})
+    all_teams = []
+    team_list = []
+    is_team_name = True
+    for table in tables:
+        trs = table.find_all("tr", class_= lambda x: "subgroup-headers" not in x)
+        if is_team_name:
+            for tr in trs:
+                if "subgroup-headers" in tr.get("class"):
+                    team_list.append({})
+                    continue
+                team =  tr.find("span", {"class": "hide-mobile"}).find("a")
+                if team:
+                    team_url = team.get("href")
+                    team_name = team.text
+                    team_id = get_team_id_from_url(team_url)
+                    team_list.append({
+                        "NAME": team_name,
+                        "LINK": team_url,
+                        "ID": team_id
+                    })
+                else:
+                    team_list.append({})
+        else:
+            for i in range(len(trs)):
+                team_info = {}
+                tr = trs[i]
+                if "subgroup-headers" in tr.get("class"):
+                    continue
+                tds = tr.find_all("td")
+                for j in range(len(tds)):
+                    td = tds[j]
+                    td_text = td.text
+                    team_info[columns[j]] = td_text
+                team_list[i]["TEAM_INFO"] = team_info
+        
+            all_teams += team_list
+            team_list = []
+        is_team_name = not is_team_name
+
+    return all_teams
+
+
 def _get_bpi(year):
     page = 1
     pull_data = True
@@ -127,6 +196,7 @@ def _get_bpi(year):
                     for i in range(len(all_td)):
                         td = all_td[i]
                         team_link = td.find("a")
+                        team_id = get_team_id_from_url(team_link)
                         if team_link:
                             td_info = {
                                 "link": team_link["href"],
@@ -137,7 +207,7 @@ def _get_bpi(year):
                         th = thead[i].text
                         team_info[th] = td_info
 
-                    bpi_ranks[team_name] = team_info
+                    bpi_ranks[team_id] = team_info
                 else:
                     print(f"Lengths don't match for BPI ranks: {team_name}")
         page += 1
@@ -145,9 +215,14 @@ def _get_bpi(year):
     return bpi_ranks
 
 if __name__ == "__main__":
-    # _get_season_stats("2", 2022)
+    # stats = _get_season_stats("2", 2022)
     # teams = _get_teams()
+    # pprint(teams)
     # now = int(time.time())
     # write_json(ESPN_TEAMS_FP, teams)
-    bpi_ranks = _get_bpi(2022)
-    write_json(BPI_TEAMS_FP, bpi_ranks)
+    # bpi_ranks = _get_bpi(2022)
+    # games = _get_games("2", 2022)
+    # write_json("./output/bpi_ranks_2022.json", bpi_ranks)
+    records = _get_season_records(2021)
+    pprint(records)
+    # write_json("./output/2021_records.json", records)
