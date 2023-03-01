@@ -5,14 +5,14 @@ from espn import (
     _get_season_records,
     _get_season_stats,
     _get_teams,
-    _get_resume
+    _get_resume,
+    GENDER
 )
 import re
 from util import parse_int
 
-GENDER = "WOMENS"
-TEAM_STATS = get_collection("team_stats") if GENDER == "MENS" else get_collection("womens_team_stats")
-GAMES = get_collection("games") if GENDER == "MENS" else get_collection("womens_games")
+TEAM_STATS = get_collection("team_stats") if GENDER == "mens" else get_collection("womens_team_stats")
+GAMES = get_collection("games") if GENDER == "mens" else get_collection("womens_games")
 
 GET_GAME_ID = r"/gameId/(\d+)"
 
@@ -136,9 +136,9 @@ def insert_stats(team_id, year, season_stats, team_info):
 
 
 def add_teams():
-    # GAMES.delete_many({})
-    # TEAM_STATS.delete_many({})
-    first_year = 2003
+    GAMES.delete_many({})
+    TEAM_STATS.delete_many({})
+    first_year = 2008
     final_year = 2022
 
     teams = _get_teams()
@@ -204,4 +204,6 @@ def add_resume():
 
 
 
+add_teams()
+add_bpi()
 add_resume()

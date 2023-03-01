@@ -8,14 +8,16 @@ import requests
 from util import *
 
 ESPN_LINK = "https://www.espn.com"
-ESPN_TEAMS_LINK = "https://www.espn.com/mens-college-basketball/teams"
+ESPN_TEAMS_LINK = "https://www.espn.com/{}-college-basketball/teams"
 ESPN_TEAMS_FP = "./output/espn_teams.json"
 BPI_TEAMS_FP = "./output/bpi_teams.json"
-ESPN_SCHEDULE_LINK = "https://www.espn.com/mens-college-basketball/team/schedule/_/id/{}/season/{}"
-ESPN_STATS_LINK = "https://www.espn.com/mens-college-basketball/team/stats/_/id/{}/season/{}"
-ESPN_BPI_LINK = "https://www.espn.com/mens-college-basketball/bpi/_/season/{}/page/{}"
-ESPN_RESUME_LINK = "https://www.espn.com/mens-college-basketball/bpi/_/view/resume/season/{}/page/{}"
-ESPN_STANDINGS_LINK = "https://www.espn.com/mens-college-basketball/standings/_/season/{}"
+ESPN_SCHEDULE_LINK = "https://www.espn.com/{}-college-basketball/team/schedule/_/id/{}/season/{}"
+ESPN_STATS_LINK = "https://www.espn.com/{}-college-basketball/team/stats/_/id/{}/season/{}"
+ESPN_BPI_LINK = "https://www.espn.com/{}-college-basketball/bpi/_/season/{}/page/{}"
+ESPN_RESUME_LINK = "https://www.espn.com/{}-college-basketball/bpi/_/view/resume/season/{}/page/{}"
+ESPN_STANDINGS_LINK = "https://www.espn.com/{}-college-basketball/standings/_/season/{}"
+
+GENDER = "womens"
 
 TEAM_ID_FROM_LINK = '\/id\/(\d+)\/'
 
@@ -34,7 +36,7 @@ def _get_teams():
     """
     Gets a list of teams from ESPN with their name and corresponding EspnId
     """
-    soup = get_soup(ESPN_TEAMS_LINK)
+    soup = get_soup(ESPN_TEAMS_LINK.format(GENDER))
     teams = soup.find_all("div", {"class": "ContentList__Item"})
     team_link_map = {}
     for team in teams:
@@ -59,7 +61,7 @@ def _get_games(team_id, year):
     """
     Gets data on games for a given team/year
     """
-    link = ESPN_SCHEDULE_LINK.format(team_id, year)
+    link = ESPN_SCHEDULE_LINK.format(GENDER, team_id, year)
     soup = get_soup(link)
 
     games = soup.find_all("tr", {"class": "Table__TR"})
@@ -92,7 +94,7 @@ def _get_season_stats(team_id, year):
     """
     Gets data on season long stats for a given team/year
     """
-    link = ESPN_STATS_LINK.format(team_id, year)
+    link = ESPN_STATS_LINK.format(GENDER, team_id, year)
     soup = get_soup(link)
     labels = soup.find_all("th")
     values = soup.find_all("td", {"class": "Stats__TotalRow"})
@@ -129,7 +131,7 @@ def _get_season_records(year):
         "VS_AP",
         "VS_USA"
     ]
-    link = ESPN_STANDINGS_LINK.format(year)
+    link = ESPN_STANDINGS_LINK.format(GENDER, year)
     soup = get_soup(link)
     tables = soup.find_all("tbody", {"class": "Table__TBODY"})
     all_teams = []
@@ -178,7 +180,7 @@ def _get_resume(year):
     pull_data = True
     resume_ranks = []
     while pull_data:
-        link = ESPN_RESUME_LINK.format(year, page)
+        link = ESPN_RESUME_LINK.format(GENDER, year, page)
         soup = get_soup(link)
         no_data = soup.find("div", {"class": "NoDataAvailable__Msg"})
         if no_data:
@@ -239,7 +241,7 @@ def _get_bpi(year):
     pull_data = True
     bpi_ranks = []
     while pull_data:
-        link = ESPN_BPI_LINK.format(year, page)
+        link = ESPN_BPI_LINK.format(GENDER, year, page)
         soup = get_soup(link)
         no_data = soup.find("div", {"class": "NoDataAvailable__Msg"})
         if no_data:
