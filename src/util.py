@@ -23,6 +23,14 @@ def parse_int(int_str):
     try:
         res = int(int_str)
         return res
-    except ValueError as e:
+    except:
         print(f"Invalid param passed {int_str}")
+        return None
+    
+def parse_float(float_str):
+    try:
+        res = float(float_str)
+        return res
+    except:
+        print(f"Invalid param passed {float_str}")
         return None

@@ -14,6 +14,7 @@ BPI_TEAMS_FP = "./output/bpi_teams.json"
 ESPN_SCHEDULE_LINK = "https://www.espn.com/mens-college-basketball/team/schedule/_/id/{}/season/{}"
 ESPN_STATS_LINK = "https://www.espn.com/mens-college-basketball/team/stats/_/id/{}/season/{}"
 ESPN_BPI_LINK = "https://www.espn.com/mens-college-basketball/bpi/_/season/{}/page/{}"
+ESPN_RESUME_LINK = "https://www.espn.com/mens-college-basketball/bpi/_/view/resume/season/{}/page/{}"
 ESPN_STANDINGS_LINK = "https://www.espn.com/mens-college-basketball/standings/_/season/{}"
 
 TEAM_ID_FROM_LINK = '\/id\/(\d+)\/'
@@ -172,44 +173,121 @@ def _get_season_records(year):
 
     return all_teams
 
+def _get_resume(year):
+    page = 1
+    pull_data = True
+    resume_ranks = []
+    while pull_data:
+        link = ESPN_RESUME_LINK.format(year, page)
+        soup = get_soup(link)
+        no_data = soup.find("div", {"class": "NoDataAvailable__Msg"})
+        if no_data:
+            pull_data = False
+        else:
+            tables = soup.find_all("table", {"class": "Table"})
+            if len(tables) <= 1:
+                print(f"Page {page} has invalid data: {link}. Breaking...")
+                break
+            team_table = True
+            all_rows = []
+            for table in tables:
+                tbody = table.find("tbody")
+                trs = tbody.find_all("tr")
+                for i in range(len(trs)):
+                    tr = trs[i]
+                    tds = tr.find_all("td")
+                    if team_table:
+                        if len(tds) != 2:
+                            print("Invalid number of columns")
+                            break
+                        team = tds[0].find("span", {"class": "TeamLink__Name"})
+                        team_conf = tds[1].text
+                        team_id = get_team_id_from_url(team.find("a").get("href"))
+                        team_name = team.text
+
+                        all_rows.append({
+                            "id": team_id,
+                            "conference": team_conf,
+                            "name": team_name
+                        })
+                    else:
+                        if len(tds) != 7:
+                            print("Invalid number of columns")
+                            break
+                        sor_rank = tds[1].text
+                        sor_seek = tds[2].text
+                        sor_scurve = tds[3].text
+                        qual_wins = tds[4].text
+                        sos_rank = tds[5].text
+                        nc_sos_rank = tds[6].text
+
+                        all_rows[i]["resume"] = {
+                            "sor": sor_rank,
+                            "sor_scurve": sor_scurve,
+                            "qual_wins": qual_wins,
+                            "sos": sos_rank,
+                            "nc_sos": nc_sos_rank
+                        }
+                team_table = not team_table
+            resume_ranks += all_rows
+        page += 1
+
+    return resume_ranks
 
 def _get_bpi(year):
     page = 1
     pull_data = True
-    bpi_ranks = {}
+    bpi_ranks = []
     while pull_data:
         link = ESPN_BPI_LINK.format(year, page)
         soup = get_soup(link)
-        no_data = soup.find("div", {"class": "no-data-available"})
+        no_data = soup.find("div", {"class": "NoDataAvailable__Msg"})
         if no_data:
             pull_data = False
         else:
-            table = soup.find("table", {"class": "bpi__table"})
-            thead = table.find_all("th")
-            tbody = table.find("tbody").find_all("tr")
+            tables = soup.find_all("table", {"class": "Table"})
+            if len(tables) <= 1:
+                print(f"Page {page} has invalid data: {link}. Breaking...")
+                break
+            team_table = True
+            all_rows = []
+            for table in tables:
+                tbody = table.find("tbody")
+                trs = tbody.find_all("tr")
+                for i in range(len(trs)):
+                    tr = trs[i]
+                    tds = tr.find_all("td")
+                    if team_table:
+                        if len(tds) != 2:
+                            print("Invalid number of columns")
+                            break
+                        team = tds[0].find("span", {"class": "TeamLink__Name"})
+                        team_conf = tds[1].text
+                        team_id = get_team_id_from_url(team.find("a").get("href"))
+                        team_name = team.text
 
-            for tr in tbody:
-                all_td = tr.find_all("td")
-                team_name = all_td[1].find("span", {"class": "team-names"}).text
-                if len(all_td) == len(thead):
-                    team_info = {}
-                    for i in range(len(all_td)):
-                        td = all_td[i]
-                        team_link = td.find("a")
-                        team_id = get_team_id_from_url(team_link)
-                        if team_link:
-                            td_info = {
-                                "link": team_link["href"],
-                                "name": td.text
-                            }
-                        else:
-                            td_info = td.text
-                        th = thead[i].text
-                        team_info[th] = td_info
+                        all_rows.append({
+                            "id": team_id,
+                            "conference": team_conf,
+                            "name": team_name
+                        })
+                    else:
+                        if len(tds) != 10:
+                            print("Invalid number of columns")
+                            break
+                        bpi = tds[1].text
+                        bpi_rank = tds[2].text
+                        bpi_off = tds[4].text
+                        bpi_def = tds[5].text
 
-                    bpi_ranks[team_id] = team_info
-                else:
-                    print(f"Lengths don't match for BPI ranks: {team_name}")
+                        all_rows[i]["bpi_info"] = {
+                            "bpi": bpi,
+                            "rank": bpi_rank,
+                            "off": bpi_off,
+                            "def": bpi_def
+                        }
+                team_table = not team_table
+            bpi_ranks += all_rows
         page += 1
 
     return bpi_ranks
@@ -221,8 +299,9 @@ if __name__ == "__main__":
     # now = int(time.time())
     # write_json(ESPN_TEAMS_FP, teams)
     # bpi_ranks = _get_bpi(2022)
+    resume = _get_resume(2022)
     # games = _get_games("2", 2022)
     # write_json("./output/bpi_ranks_2022.json", bpi_ranks)
-    records = _get_season_records(2021)
-    pprint(records)
+    # records = _get_season_records(2021)
+    pprint(resume)
     # write_json("./output/2021_records.json", records)

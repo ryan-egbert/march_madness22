@@ -5,12 +5,14 @@ from espn import (
     _get_season_records,
     _get_season_stats,
     _get_teams,
+    _get_resume
 )
 import re
 from util import parse_int
 
-TEAM_STATS = get_collection("team_stats")
-GAMES = get_collection("games")
+GENDER = "WOMENS"
+TEAM_STATS = get_collection("team_stats") if GENDER == "MENS" else get_collection("womens_team_stats")
+GAMES = get_collection("games") if GENDER == "MENS" else get_collection("womens_games")
 
 GET_GAME_ID = r"/gameId/(\d+)"
 
@@ -157,8 +159,49 @@ def add_teams():
             season_stats = _get_season_stats(team_id, year)
             insert_stats(team_id, year, season_stats, team_info)
 
+def add_bpi():
+    first_year = 2008
+    final_year = 2022
+
+    for year in range(first_year, final_year+1):
+        print(f"Processing year {year}...")
+        bpi_ranks = _get_bpi(year)
+        count = 0
+        for bpi_info in bpi_ranks:
+            count += 1
+            if count % 100 == 0:
+                print(f"Team {count} of {len(bpi_ranks)} processed")
+            team_id = bpi_info.get("id")
+            conf = bpi_info.get("conference")
+            bpi_info = bpi_info.get("bpi_info")
+
+            TEAM_STATS.find_one_and_update({"team_id": team_id, "year": year}, {
+                "$set": {"bpi_info": bpi_info, "info.CONFERENCE": conf}
+            })
             
+def add_resume():
+    first_year = 2008
+    final_year = 2022
+
+    for year in range(first_year, final_year+1):
+        print(f"Processing year {year}...")
+        resume_ranks = _get_resume(year)
+        count = 0
+        for resume in resume_ranks:
+            count += 1
+            if count % 100 == 0:
+                print(f"Team {count} of {len(resume_ranks)} processed")
+            team_id = resume.get("id")
+            # print(team_id, year)
+            # conf = resume.get("conference")
+            resume_info = resume.get("resume")
+
+            TEAM_STATS.find_one_and_update({"team_id": team_id, "year": year}, {
+                "$set": {"resume_info": resume_info}
+            })
+        #     break
+        # break
 
 
 
-add_teams()
+add_resume()
