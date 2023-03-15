@@ -139,8 +139,8 @@ def insert_stats(team_id, year, season_stats, team_info):
 
 
 def add_teams():
-    GAMES.delete_many({})
-    TEAM_STATS.delete_many({})
+    # GAMES.delete_many({})
+    # TEAM_STATS.delete_many({})
 
     teams = _get_teams()
 

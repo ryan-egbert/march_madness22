@@ -17,7 +17,7 @@ ESPN_BPI_LINK = "https://www.espn.com/{}-college-basketball/bpi/_/season/{}/page
 ESPN_RESUME_LINK = "https://www.espn.com/{}-college-basketball/bpi/_/view/resume/season/{}/page/{}"
 ESPN_STANDINGS_LINK = "https://www.espn.com/{}-college-basketball/standings/_/season/{}"
 
-GENDER = "womens"
+GENDER = "mens"
 
 TEAM_ID_FROM_LINK = '\/id\/(\d+)\/'
 
