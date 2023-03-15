@@ -16,6 +16,9 @@ GAMES = get_collection("games") if GENDER == "mens" else get_collection("womens_
 
 GET_GAME_ID = r"/gameId/(\d+)"
 
+first_year = 2023
+final_year = 2023
+
 def get_team_id_from_link(link):
     teams = _get_teams()
     for team_id, team_info in teams.items():
@@ -138,8 +141,6 @@ def insert_stats(team_id, year, season_stats, team_info):
 def add_teams():
     GAMES.delete_many({})
     TEAM_STATS.delete_many({})
-    first_year = 2008
-    final_year = 2022
 
     teams = _get_teams()
 
@@ -160,9 +161,6 @@ def add_teams():
             insert_stats(team_id, year, season_stats, team_info)
 
 def add_bpi():
-    first_year = 2008
-    final_year = 2022
-
     for year in range(first_year, final_year+1):
         print(f"Processing year {year}...")
         bpi_ranks = _get_bpi(year)
@@ -180,9 +178,6 @@ def add_bpi():
             })
             
 def add_resume():
-    first_year = 2008
-    final_year = 2022
-
     for year in range(first_year, final_year+1):
         print(f"Processing year {year}...")
         resume_ranks = _get_resume(year)
