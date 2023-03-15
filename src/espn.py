@@ -76,6 +76,7 @@ def _get_games(team_id, year):
                 header = False
                 for i in range(len(game_info)):
                     td = game_info[i]
+                    print(td)
                     header_data[i] = td.text
             else:
                 for i in range(len(game_info)):
@@ -86,6 +87,7 @@ def _get_games(team_id, year):
                         td_data["link"] = td_link["href"]
                     td_data["info"] = td.text
                     data[header_data[i]] = td_data
+                    
                 all_games.append(data)
 
     return all_games
