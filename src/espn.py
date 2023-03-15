@@ -71,7 +71,7 @@ def _get_games(team_id, year):
     for game in games:
         game_info = game.find_all("td")
         data = {}
-        if len(game_info) > 1:
+        if len(game_info) != 7:
             if header:
                 header = False
                 for i in range(len(game_info)):
