@@ -17,7 +17,7 @@ ESPN_BPI_LINK = "https://www.espn.com/{}-college-basketball/bpi/_/season/{}/page
 ESPN_RESUME_LINK = "https://www.espn.com/{}-college-basketball/bpi/_/view/resume/season/{}/page/{}"
 ESPN_STANDINGS_LINK = "https://www.espn.com/{}-college-basketball/standings/_/season/{}"
 
-GENDER = "mens"
+GENDER = "womens"
 
 TEAM_ID_FROM_LINK = '\/id\/(\d+)\/'
 
@@ -76,7 +76,7 @@ def _get_games(team_id, year):
                 header = False
                 for i in range(len(game_info)):
                     td = game_info[i]
-                    print(td)
+                    # print(td)
                     header_data[i] = td.text
             else:
                 for i in range(len(game_info)):
@@ -91,6 +91,45 @@ def _get_games(team_id, year):
                 all_games.append(data)
 
     return all_games
+
+def _get_top_player_stats(team_id, year):
+    link = ESPN_STATS_LINK.format(GENDER, team_id, year)
+    soup = get_soup(link)
+    table = soup.find("div", {"class", "Table__ScrollerWrapper"})
+    if not table:
+        return {}
+    labels = table.find_all("th")
+    rows = table.find_all("tr", {"class", "Table__TR--sm"})
+    
+    top_player_stats = {}
+    rows_to_skip = []
+    for i in range(len(labels)):
+        label = labels[i].find("span")
+        if label:
+            label_text = label.text
+            for j in range(len(rows) - 1):
+                if j in rows_to_skip:
+                    continue
+                row = rows[j]
+                stats = row.find_all("td")
+                stat = float(stats[i].text)
+                if label_text == "GP" and stat < 10 or \
+                    label_text == "MIN" and stat < 5:
+                        rows_to_skip.append(j)
+                        print("Skipping player, GP or MIN were too low...")
+                else:
+                    if label_text in top_player_stats:
+                        top_player_stats[label_text].append(stat)
+                    else:
+                        top_player_stats[label_text] = [stat]
+        
+    max_stats = {}            
+    for label, stats in top_player_stats.items():
+        max_stat = max(stats)
+        max_stats[label] = max_stat
+    
+    return max_stats
+    
 
 def _get_season_stats(team_id, year):
     """
@@ -297,15 +336,15 @@ def _get_bpi(year):
     return bpi_ranks
 
 if __name__ == "__main__":
-    # stats = _get_season_stats("2", 2022)
+    stats = _get_top_player_stats("2", 2022)
     # teams = _get_teams()
     # pprint(teams)
     # now = int(time.time())
     # write_json(ESPN_TEAMS_FP, teams)
     # bpi_ranks = _get_bpi(2022)
-    resume = _get_resume(2022)
+    # resume = _get_resume(2022)
     # games = _get_games("2", 2022)
     # write_json("./output/bpi_ranks_2022.json", bpi_ranks)
     # records = _get_season_records(2021)
-    pprint(resume)
+    pprint(stats)
     # write_json("./output/2021_records.json", records)

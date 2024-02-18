@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 import json
 
 def get_soup(link):
-    resp = requests.get(link)
+    resp = requests.get(link, headers={"User-agent": "Mozilla/5.0"})
     text = resp.text
     soup = BeautifulSoup(text, 'html.parser')
     return soup

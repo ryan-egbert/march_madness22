@@ -26,6 +26,12 @@ def construct_team_row(info, stats, bpi, resume):
     home_record = info.get("HOME_RECORD").split("-")
     away_record = info.get("AWAY_RECORD").split("-")
     vs_ap_record = info.get("VS_AP").split("-")
+    vs_ap_wins = parse_int(vs_ap_record[0])
+    vs_ap_losses = parse_int(vs_ap_record[1])
+    if vs_ap_losses is not None and vs_ap_wins is not None:
+        vs_ap_percent = vs_ap_wins / (vs_ap_wins + vs_ap_losses) if (vs_ap_wins + vs_ap_losses) > 0 else 0
+    else:
+        vs_ap_percent = 0
     quality = resume.get("qual_wins").split("-")
     quality_wins, quality_losses = parse_int(quality[0]), parse_int(quality[1])
     team = {
@@ -43,6 +49,7 @@ def construct_team_row(info, stats, bpi, resume):
         "AWAY_PERCENT": info.get("OVR_PERCENT"),
         "AWAY_WINS": away_record[0],
         "AWAY_LOSSES": away_record[1],
+        "VS_AP_PERCENT": str(vs_ap_percent),
         "VS_AP_WINS": vs_ap_record[0],
         "VS_AP_LOSSES": vs_ap_record[1],
         "CONF": info.get("CONFERENCE"),
@@ -50,6 +57,7 @@ def construct_team_row(info, stats, bpi, resume):
         "PPG": stats.get("PPG"),
         "ORBPG": str(stats.get("ORBPG")),
         "DRBPG": str(stats.get("DRBPG")),
+        "RBPG": stats.get("RPG"),
         "APG": stats.get("APG"),
         "SPG": stats.get("SPG"),
         "BPG": stats.get("BPG"),
@@ -80,19 +88,16 @@ def construct_team_row(info, stats, bpi, resume):
 def compile_data():
     input_file = open(INPUT_FN, 'w')
     input_file.write( # TEAM METRICS
-                    "TEAM,RECORD_PCT,WINS,LOSSES,CONF_PCT,CONF_WINS,CONF_LOSSES,"\
-                    "HOME_PCT,HOME_WINS,HOME_LOSSES,AWAY_PCT,AWAY_WINS,AWAY_LOSSES,"\
-                    "VS_AP_WINS,VS_AP_LOSSES,CONF,"\
-                    "PPG,ORBPG,DRBPG,APG,SPG,BPG,TOPG,FG%,FT%,3P%,"\
-                    "FGAPG,FTAPG,3PAPG,OBPI,DBPI,BPIRK,SOR,SOR_SCURVE,SOS,NCSOS,"\
-                    "QUAL_WINS,QUAL_LOSSES,QUALITY_INDICATOR,FINAL_STREAK,SCORE"\
+                    "TEAM,RECORD_PCT,"\
+                    "PPG,FG%,"\
+                    "FGAPG,OBPI,DBPI,SOR,"\
+                    "SCORE,"\
                     # OPPONENT METRICS
-                    "OPP_TEAM,OPP_RECORD_PCT,OPP_WINS,OPP_LOSSES,OPP_CONF_PCT,OPP_CONF_WINS,OPP_CONF_LOSSES,"\
-                    "OPP_HOME_PCT,OPP_HOME_WINS,OPP_HOME_LOSSES,OPP_AWAY_PCT,OPP_AWAY_WINS,OPP_AWAY_LOSSES,"\
-                    "OPP_VS_AP_WINS,OPP_VS_AP_LOSSES,OPP_CONF,"\
-                    "OPP_PPG,OPP_ORBPG,OPP_DRBPG,OPP_APG,OPP_SPG,OPP_BPG,OPP_TOPG,OPP_FG%,OPP_FT%,OPP_3P%,"\
-                    "OPP_FGAPG,OPP_FTAPG,OPP_3PAPG,OPP_OBPI,OPP_DBPI,OPP_BPIRK,OPP_SOR,OPP_SOR_SCURVE,OPP_SOS,OPP_NCSOS,"\
-                    "OPP_QUAL_WINS,OPP_QUAL_LOSSES,OPP_QUALITY_INDICATOR,OPP_FINAL_STREAK,OPP_SCORE,WINNER\n")
+                    "OPP_TEAM,OPP_RECORD_PCT,"\
+                    "OPP_PPG,OPP_FG%,"\
+                    "OPP_FGAPG,OPP_OBPI,OPP_DBPI,OPP_SOR,"\
+                    "OPP_SCORE,"\
+                    "WINNER\n")
 
     games = get_all_games()
     teams = get_all_teams()
@@ -100,6 +105,8 @@ def compile_data():
     count = 0
     for game in games:
         count += 1
+        # if "Mar" not in game.get("date", ""):
+        #     continue
         team1 = str(game.get("team_1").get("id"))
         team2 = str(game.get("team_2").get("id"))
         team1_score = game.get("team_1").get("score")
@@ -147,4 +154,4 @@ def load_input_file(fn=INPUT_FN):
     print(df.head())
         
 
-load_input_file()
+compile_data()

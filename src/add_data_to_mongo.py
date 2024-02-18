@@ -6,17 +6,19 @@ from espn import (
     _get_season_stats,
     _get_teams,
     _get_resume,
+    _get_top_player_stats,
     GENDER
 )
 import re
 from util import parse_int
+import json
 
 TEAM_STATS = get_collection("team_stats") if GENDER == "mens" else get_collection("womens_team_stats")
 GAMES = get_collection("games") if GENDER == "mens" else get_collection("womens_games")
 
 GET_GAME_ID = r"/gameId/(\d+)"
 
-first_year = 2023
+first_year = 2011
 final_year = 2023
 
 def get_team_id_from_link(link):
@@ -139,8 +141,8 @@ def insert_stats(team_id, year, season_stats, team_info):
 
 
 def add_teams():
-    # GAMES.delete_many({})
-    # TEAM_STATS.delete_many({})
+    GAMES.delete_many({})
+    TEAM_STATS.delete_many({})
 
     teams = _get_teams()
 
@@ -196,9 +198,31 @@ def add_resume():
             })
         #     break
         # break
+        
+def add_top_player_stats():
+    with open("./output/espn_teams.json", 'r') as f:
+        espn_teams = json.load(f)
+    for year in range(first_year, final_year + 1):
+        print(f"Processing year: {year}")
+        for team_id, _ in espn_teams.items():
+            exists = TEAM_STATS.find_one({"team_id": team_id, "year": year, "top_player_stats": {"$exists": True}})
+            print(f"\tProcessing {team_id} - {year}")
+            if exists:
+                print(f"\tEntry already exists for {team_id} - {year}")
+                continue
+            top_player_stats = _get_top_player_stats(team_id, year)
+            TEAM_STATS.find_one_and_update({"team_id": team_id, "year": year}, {
+                "$set": {"top_player_stats": top_player_stats}
+            })
 
+
+# add_top_player_stats()
+
+# cursor = TEAM_STATS.find()
+# for entry in cursor:
+#     print(entry)
 
 
 add_teams()
-add_bpi()
-add_resume()
+# add_bpi()
+# add_resume()
