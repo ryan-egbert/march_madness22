@@ -73,6 +73,6 @@ def check_all_exist():
 
 
 if __name__ == "__main__":
-    # school_map = get_possible_map()
+    school_map = get_possible_map()
     # write_json("output/possible_map.json", school_map)
-    check_all_exist()
+    # check_all_exist()

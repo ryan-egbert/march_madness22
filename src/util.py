@@ -29,7 +29,7 @@ def parse_int(int_str):
     
 def parse_float(float_str):
     try:
-        res = float(float_str)
+        res = round(float(float_str), 2)
         return res
     except:
         print(f"Invalid param passed {float_str}")
